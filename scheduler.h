@@ -193,5 +193,8 @@ void sortByName(FinishedProcess** arr, unsigned int length);
    completed processes. */
 void showFinalMetrics(Scheduler* scheduler);
 
+/* cleanUp Auxilary function to dellocate memory of a ProcessQueue Linked List */
+void freeWaitingQueue(ProcessQueue* node);
+
 /* Clean up all allocated memory */
 void cleanUp(Scheduler* scheduler);

@@ -1,3 +1,5 @@
+# This is a sample input file
+
 processcount 4 # Read 4 processes
 runfor 30 # Run for 30 time units
 use sjf # Can be fcfs, sjf, or rr

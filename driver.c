@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "input.h"
 
+// Begin Main
 int main(void) {
-
   // Get the Scheduler Configs
   SchedulerConfig config = readConfigParams();
 
@@ -31,4 +31,6 @@ int main(void) {
 
   // Deallocate all memory for the program
   cleanUp(&scheduler);
+
+  return 0;
 }
