@@ -1,7 +1,7 @@
 #include "scheduler.h"
 
 /* File to be read in */
-#define INPUTFILE "set4_process.in"
+#define INPUTFILE "processes.in"
 
 /* Number of processes to be read */
 int processCount;

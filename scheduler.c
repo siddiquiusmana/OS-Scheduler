@@ -12,6 +12,7 @@ Process* createProcess(char* processName, int burstsRequired, int timeOfArrival)
 
   // Populate the fields with passed in parameters
   strcpy(process->name, processName);
+  process->totalBurstsRequired = burstsRequired;
   process->burstsRequired = burstsRequired;
   process->timeOfArrival = timeOfArrival;
 
@@ -85,7 +86,6 @@ void sortbySchedulerType(SchedulerConfig config, Process** processes, int low, i
     int split;
     if(config.selectedScheduler == 2){
       split = partitionByBurstsRequired(processes, low, high);
-      printf("here!");
     }
     else
       split = partitionByTimeOfArrival(processes,low,high);
@@ -236,6 +236,9 @@ void showQueue(ProcessQueue* head)
 // executeProcesses Implementation
 void executeProcesses(SchedulerConfig config, Scheduler* scheduler)
 {  
+  // Allocate space for finishedProcess placeholders
+  scheduler->finishedProcesses = (FinishedProcess**) malloc(sizeof(FinishedProcess*) * scheduler->processCount);
+  
   // Contact the appropriate scheduler based on configs  
   if(config.selectedScheduler == 1){
     printf("Using First Come First Serve\n\n");
@@ -291,6 +294,22 @@ void discoverNewProcesses(SchedulerConfig config, Scheduler* scheduler)
   }
 }
 
+// createFinishedProcess Implementation
+FinishedProcess* createFinishedProcessNode(Process* process)
+{
+  // Allocate memory for the finished process
+  FinishedProcess* finishedProcess = (FinishedProcess*) malloc(sizeof(FinishedProcess));
+
+  // Set the process and initialize other attributes to default values
+  finishedProcess->process = process;
+  finishedProcess->completionTime = 0;
+  finishedProcess->turnAround = 0;
+  finishedProcess->wait = 0;
+
+  // Return the node
+  return finishedProcess;
+}
+
 // handleProcessFinish Implementation 
 void handleProcessFinish(SchedulerConfig config, Scheduler* scheduler, int* lock)
 {
@@ -299,9 +318,17 @@ void handleProcessFinish(SchedulerConfig config, Scheduler* scheduler, int* lock
   {
     printf("Time %d: %s finished\n", scheduler->clock, scheduler->processInExecution->name);
 
-    // Free the process
+    // Create a finishedProcessNode
     Process* finishedProcess = scheduler->processInExecution;
-    free(finishedProcess);
+    FinishedProcess* finishedProcessNode = createFinishedProcessNode(finishedProcess);
+
+    // Calculate process completion metrics
+    finishedProcessNode->completionTime = scheduler->clock;
+    finishedProcessNode->turnAround = finishedProcessNode->completionTime - finishedProcess->timeOfArrival;
+    finishedProcessNode->wait = finishedProcessNode->turnAround - finishedProcess->totalBurstsRequired;
+
+    // Add the finishedProcessNode to the finishedProcesses List
+    scheduler->finishedProcesses[scheduler->numFinishedProcesses++] = finishedProcessNode;
 
     // Set current process to NULL
     scheduler->processInExecution = NULL;
@@ -516,5 +543,96 @@ void sjf(SchedulerConfig config, Scheduler* scheduler)
     scheduler->clock++;
   }
 
-  printf("Finished at time %d", scheduler->clock);
+  printf("Finished at time %d\n", scheduler->clock);
+}
+
+// swapFinishedProcess Implementation
+void swapFinishedProcess(FinishedProcess **a, FinishedProcess **b) {
+	FinishedProcess *temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+// sortByName Implementation
+void sortByName(FinishedProcess** arr, unsigned int length) {
+	unsigned int i, piv = 0;
+	if (length <= 1) 
+		return;
+	
+	for (i = 0; i < length; i++) {
+		// if curr str < pivot str, move curr into lower array and  lower++(pvt)
+		if (strcmp(arr[i]->process->name, arr[length -1]->process->name) < 0) 	//use string in last index as pivot
+			swapFinishedProcess(arr + i, arr + piv++);		
+	}
+	//move pivot to "middle"
+	swapFinishedProcess(arr + piv, arr + length - 1);
+
+	//recursively sort upper and lower
+	sortByName(arr, piv++);			//set length to current pvt and increase for next call
+	sortByName(arr + piv, length - piv);
+}
+
+// showFinalMetrics Implementation
+void showFinalMetrics(Scheduler* scheduler)
+{
+  // Check if a processes arrived outside of scheduler runtime
+  for(int i=idxUnaccountedFor+1; i<scheduler->processCount; i++)
+    printf("i = %d %s could not be scheduled\n", i, scheduler->arrivalQueue[i]->name);
+
+  // Check if there's still a current process
+  if(scheduler->processInExecution != NULL)
+    printf("%s did not complete\n", scheduler->processInExecution->name);
+  
+  // Check if any proceses in waitingQueue were not able to finish
+  ProcessQueue* head = scheduler->waitingQueue;
+  
+  if(head != NULL){
+    printf("%s did not complete\n", head->process->name);
+  
+    ProcessQueue* t = head;
+    while(t->next != NULL){
+      printf("%s did not complete\n", t->next->process->name);
+      t = t->next;
+    }
+    printf("\n");
+  }
+
+  // Sort the finishedProcesses list by name
+  sortByName(scheduler->finishedProcesses, scheduler->numFinishedProcesses);
+  
+  // Print metrics
+  printf("\n");
+  for(int i=0; i<scheduler->numFinishedProcesses; i++)
+    printf("%s wait %d turnaround %d\n", scheduler->finishedProcesses[i]->process->name, scheduler->finishedProcesses[i]->wait, scheduler->finishedProcesses[i]->turnAround);
+}
+
+// freeWaitingQueue Implementation
+void freeWaitingQueue(ProcessQueue* node)
+{
+  if(node->next == NULL){
+    printf("freeing %s\n", node->process->name);
+    //free(node);
+    return;
+  }
+  freeWaitingQueue(node->next);
+  printf("freeing %s\n", node->process->name);
+  //free(node);
+}
+
+// cleanUp Implementation
+void cleanUp(Scheduler* scheduler)
+{
+  // Free all the Process nodes
+  for(int i=0; i<scheduler->processCount; i++)
+    free(scheduler->arrivalQueue[i]);
+
+  // Free arrivalQueue list
+  free(scheduler->arrivalQueue);
+
+  // Free each ProcessQueue node
+  if(scheduler->waitingQueue != NULL)
+    freeWaitingQueue(scheduler->waitingQueue);
+
+  // Free finishedProcesses list
+  free(scheduler->finishedProcesses);
 }

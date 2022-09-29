@@ -7,15 +7,10 @@
 /* INPUT FILE */
 FILE *ifp;
 
-/* OUTPUT FILE */
-FILE *ofp;
-
 /* SchedulerConfig Implementation */
 SchedulerConfig readConfigParams(){
   // Open the input file
   ifp = fopen(INPUTFILE, "r");
-
-  ofp = fopen("out.txt", "w");
 
   // SchedulerConfig type declaration to be returned
   SchedulerConfig configs;

@@ -1,10 +1,9 @@
 /* LIBRARIES */
 #include <stdio.h>
-#include <stdbool.h>
 #include "input.h"
 
+// Begin Main
 int main(void) {
-
   // Get the Scheduler Configs
   SchedulerConfig config = readConfigParams();
 
@@ -26,4 +25,12 @@ int main(void) {
 
   // Call the appropriate schedulers and execute processes
   executeProcesses(config, &scheduler);
+
+  // Display final metrics for scheduler's runtime
+  showFinalMetrics(&scheduler);
+
+  // Deallocate all memory for the program
+  cleanUp(&scheduler);
+
+  return 0;
 }
