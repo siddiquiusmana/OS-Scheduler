@@ -4,6 +4,9 @@ typedef struct Process{
   char name[21];
 
   /* Process length in bursts */
+  int totalBurstsRequired;
+
+  /* Bursts remaining till process completion */
   int burstsRequired;
 
   /* Current status of process:
@@ -87,7 +90,7 @@ typedef struct Scheduler{
   /* Number of processes */
   int processCount;
 
-  /* Waiting Queue for processes that are ready */
+  /* Linked list waiting Queue for processes that are ready */
   ProcessQueue *waitingQueue;
 
   /* Process currently executing */
@@ -154,6 +157,9 @@ void executeProcess(SchedulerConfig config, Scheduler* scheduler);
 /* Show the list of processes in waitingQueue. */
 void showQueue(ProcessQueue* head);
 
+/* Create a FinishedProcess node and return it */
+FinishedProcess* createFinishedProcessNode(Process* process);
+
 /* Function to free a process memory once its finished and set current process to NULL */
 void handleProcessFinish(SchedulerConfig config, Scheduler* scheduler, int* lock);
 
@@ -175,3 +181,17 @@ void sjf(SchedulerConfig config, Scheduler* scheduler);
 
 /* Selects the process from waitingQueue based on Shortest Job First methodology */
 void sjfSelectProcess(SchedulerConfig config, Scheduler* scheduler);
+
+/* sortByName Auxilary function. Swaps two finishedProcess nodes */
+void swapFinishedProcess(FinishedProcess **a, FinishedProcess **b);
+
+/* QuickSort function to sort FinishedProcess array by name (String) */
+void sortByName(FinishedProcess** arr, unsigned int length);
+
+/* Displays all relevant metrics including how many processes failed to be scheduled or did
+   not finish executing. Additionally, displays the final wait and turnaround time for 
+   completed processes. */
+void showFinalMetrics(Scheduler* scheduler);
+
+/* Clean up all allocated memory */
+void cleanUp(Scheduler* scheduler);

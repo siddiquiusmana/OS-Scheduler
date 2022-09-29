@@ -1,0 +1,11 @@
+# build files
+input.c.blob
+/.ccls-cache
+
+# IO Files
+out.txt
+
+# Replit files
+.breakpoints
+.replit
+replit.nix
