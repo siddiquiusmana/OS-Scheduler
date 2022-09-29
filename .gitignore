@@ -1,6 +1,7 @@
 # build files
 input.c.blob
 /.ccls-cache
+Scheduler
 
 # IO Files
 out.txt
